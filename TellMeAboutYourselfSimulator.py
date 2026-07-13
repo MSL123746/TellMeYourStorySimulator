@@ -130,7 +130,7 @@ def build_narrative_prompt(project_description: str, resume_text: str) -> str:
     return f"""
 You are an expert interview coach.
 
-Using the job description and resume content below, create a "Tell My Story" narrative for the interview question: "Tell me about yourself."
+Using the job description and resume content below, create a "Tell My Story" narrative for a general professional conversation.
 
 Project Description:
 {project_description}
@@ -144,9 +144,9 @@ Instructions:
 3. Keep it in first person, polished, confident, and natural for live delivery.
 4. Use a professional-conversational tone: warm, clear, and human, but not overly casual.
 5. Vary sentence length and avoid repetitive sentence openings.
-6. Use plain spoken language and light contractions where natural (for example: "I've", "I've led", "I'm excited").
+6. Use plain spoken language and light contractions where natural (for example: "I've", "I've led", "I'm focused").
 7. Avoid robotic or overly formal phrases like "I am writing to express", "therefore", "moreover", "in conclusion", "it is imperative", "leverage synergies", and "utilize".
-8. Sound like a real candidate speaking naturally in an interview, not reading a formal essay.
+8. Sound like a real person speaking naturally in conversation, not reading a formal essay.
 9. Use my resume experience as the foundation and tightly align it to this specific job description.
 10. Intertwine my experience with the role requirements so the response sounds tailored, strategic, and role-specific.
 11. Highlight concrete impact, measurable outcomes, and transferable strengths that map directly to the job.
@@ -160,9 +160,12 @@ Instructions:
 19. Do not use section headers, titles, labels, bullet points, or numbered lists.
 20. Do not include conversational opening pleasantries (for example: "Hi", "Thanks for having me", "Great to meet you").
 21. Return the response as a conversation-like personal story about me in paragraph form only (2-3 cohesive paragraphs).
-22. Keep the voice natural and spoken, as if I am answering live in an interview.
-23. Do not include title-like starters such as "Tell me about yourself:", "Background:", "Who I am:", or similar label text.
-24. Output only markdown text (no JSON, no HTML).
+22. Keep the voice natural and spoken, as if I am talking in a general professional conversation.
+23. Start naturally with a spoken opener in this style: "Well, I've been ..." and then explain how my experience built over time.
+24. Emphasize progression over time, with examples of what I learned and how that led me to apply for this role.
+25. Do not include title-like starters such as "Tell me about yourself:", "Background:", "Who I am:", or similar label text.
+26. Do not use words like "excited", "thrilled", "glad", or "motivated".
+27. Output only markdown text (no JSON, no HTML).
 """.strip()
 
 
@@ -346,6 +349,19 @@ def enforce_elevator_word_rules(text: str) -> str:
     return cleaned
 
 
+def enforce_story_word_rules(text: str) -> str:
+    cleaned = text.strip()
+
+    # Remove disallowed words without replacing with other hype wording.
+    disallowed = ["excited", "Excited", "thrilled", "Thrilled", "glad", "Glad", "motivated", "Motivated"]
+    for word in disallowed:
+        cleaned = cleaned.replace(word, "")
+
+    # Cleanup extra spaces that can appear after removals.
+    cleaned = " ".join(cleaned.split())
+    return cleaned
+
+
 def simplify_jargon(text: str) -> str:
     replacements = {
         "cross-functional": "across teams",
@@ -506,6 +522,7 @@ with tab_story:
                             narrative_md = cleanup_narrative_format(narrative_md)
                             narrative_md = soften_robotic_tone(narrative_md)
                             narrative_md = simplify_jargon(narrative_md)
+                            narrative_md = enforce_story_word_rules(narrative_md)
                             narrative_md = cap_narrative_to_medium_two_minutes(narrative_md, max_words=260)
                             st.session_state["narrative_md"] = narrative_md
                         except Exception as exc:
