@@ -1,0 +1,5 @@
+streamlit
+huggingface_hub
+PyPDF2
+pypdf
+python-docx
