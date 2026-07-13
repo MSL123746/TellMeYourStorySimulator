@@ -166,6 +166,45 @@ Instructions:
 """.strip()
 
 
+def build_elevator_pitch_prompt(job_role_details: str) -> str:
+    return f"""
+You are an expert interview coach.
+
+Create a simple 30-second elevator pitch based on the role details below.
+
+Job Role Details:
+{job_role_details}
+
+Instructions:
+1. Write in first person as if I am speaking to an executive who asked what I do.
+2. Keep it professional-conversational, clear, and natural, not robotic.
+3. Keep it short enough for about 30 seconds at a medium pace.
+4. Keep the total length between 50 and 75 words, and never exceed 75 words.
+5. Focus on: who I am, what I do day-to-day, and the value I create.
+6. Use plain language and avoid technical jargon or buzzwords.
+7. Follow this structure every time:
+    - Sentence 1: My current role context and how I contribute with my team.
+    - Sentence 2: The specific business value I drive and the kinds of outcomes I create.
+    - Sentence 3: Why this work matters to the business in simple terms.
+8. Include a balance of people-oriented strengths and execution strengths (for example: collaboration, creative problem-solving, and data-informed decisions).
+9. Keep the tone similar to this style: confident, direct, and grounded in impact, without sounding scripted.
+10. Use short, clear sentences that sound like spoken conversation.
+11. Prefer wording like "My role is...", "I work on...", "I also help...", and "That has helped...".
+12. Avoid formal phrasing like "This enables me" or "propel the organization's success".
+13. Keep language simple and natural, like I am speaking in a quick hallway conversation.
+14. Avoid generic closing lines such as "has prepared me well for this role" or "my background in ... has prepared me".
+15. Do not use titles, section headers, bullets, or numbered lists.
+16. Return a single cohesive paragraph only.
+17. Speak directly as if I am talking to one executive in front of me.
+18. Do not include lead-in phrases like "Here is my narrative", "Here is my elevator pitch", "Sure", or "Absolutely".
+19. Start immediately with the pitch content itself.
+20. Do not use greeting/opening words such as "Hey", "Hi", or "Hello".
+21. Do not use the word "excited".
+22. Do not use phrases like "strong fit" or "perfect fit".
+23. Output only markdown text (no JSON, no HTML).
+""".strip()
+
+
 def cap_narrative_to_medium_two_minutes(text: str, max_words: int = 260) -> str:
     words = text.split()
     if len(words) <= max_words:
@@ -226,6 +265,33 @@ def cleanup_narrative_format(text: str) -> str:
     return text_flat
 
 
+def strip_leading_preface(text: str) -> str:
+    lower_text = text.lower().strip()
+    preface_starts = [
+        "here is my narrative",
+        "here's my narrative",
+        "here is my elevator pitch",
+        "here's my elevator pitch",
+        "here is your elevator pitch",
+        "here's your elevator pitch",
+        "this is my elevator pitch",
+        "certainly",
+        "absolutely",
+        "sure",
+    ]
+
+    for phrase in preface_starts:
+        if lower_text.startswith(phrase):
+            # Drop text up to first sentence boundary or colon, then continue with the pitch.
+            for sep in [":", ".", "!", "?"]:
+                idx = text.find(sep)
+                if idx != -1 and idx < 140:
+                    return text[idx + 1 :].strip()
+            return ""
+
+    return text
+
+
 def soften_robotic_tone(text: str) -> str:
     replacements = {
         "I am ": "I'm ",
@@ -238,7 +304,6 @@ def soften_robotic_tone(text: str) -> str:
         "moreover": "also",
         "therefore": "so",
         "in conclusion": "overall",
-        "I am excited": "I'm excited",
         "I am confident": "I'm confident",
     }
 
@@ -247,6 +312,38 @@ def soften_robotic_tone(text: str) -> str:
         updated = updated.replace(old, new)
 
     return updated
+
+
+def enforce_elevator_word_rules(text: str) -> str:
+    cleaned = text.strip()
+
+    # Remove common greeting starts.
+    for greeting in ["Hey", "Hi", "Hello", "hey", "hi", "hello"]:
+        if cleaned.startswith(greeting + " "):
+            cleaned = cleaned[len(greeting) + 1 :].strip(" ,.!?-")
+            break
+
+    # Replace disallowed enthusiasm wording with a neutral alternative.
+    cleaned = cleaned.replace("excited", "motivated")
+    cleaned = cleaned.replace("Excited", "Motivated")
+
+    # Remove interview-rating phrasing that the user does not want.
+    cleaned = cleaned.replace("strong fit", "good match")
+    cleaned = cleaned.replace("Strong fit", "Good match")
+    cleaned = cleaned.replace("perfect fit", "good match")
+    cleaned = cleaned.replace("Perfect fit", "Good match")
+
+    # Remove overly generic interview filler phrasing.
+    generic_phrases = [
+        "has prepared me well for this role",
+        "have prepared me well for this role",
+        "my background in understanding customer behavior and making data-informed decisions",
+    ]
+    for phrase in generic_phrases:
+        cleaned = cleaned.replace(phrase, "my hands-on work and results")
+        cleaned = cleaned.replace(phrase.capitalize(), "My hands-on work and results")
+
+    return cleaned
 
 
 def simplify_jargon(text: str) -> str:
@@ -418,7 +515,47 @@ with tab_story:
             st.markdown("---")
             st.markdown(st.session_state["narrative_md"])
 
-# Placeholder for the next feature
 with tab_elevator:
     st.header("Create Elevator Pitch")
-    st.info("This tab is ready as a placeholder for the next feature.")
+    elevator_left_col, elevator_right_col = st.columns([1.15, 1], gap="large")
+
+    with elevator_left_col:
+        st.markdown("### Enter Your Job Role with some Detail")
+        elevator_role_details = st.text_area(
+            "Enter Your Job Role with some Detail",
+            key="elevator_role_details",
+            height=220,
+            placeholder="Describe the role and what the company needs...",
+            label_visibility="collapsed",
+        )
+
+    with elevator_right_col:
+        st.markdown("### 30-Second Elevator Pitch")
+        submit_elevator = st.button("Submit", use_container_width=True, key="submit_elevator_btn")
+
+        if submit_elevator:
+            if not elevator_role_details.strip():
+                st.error("Please enter your job role details first.")
+            else:
+                with st.spinner("Generating your elevator pitch..."):
+                    try:
+                        hf_token = get_hf_token()
+                        if not hf_token:
+                            st.error("Missing Hugging Face token. Add HF_TOKEN to .streamlit/secrets.toml.")
+                            st.stop()
+
+                        elevator_prompt = build_elevator_pitch_prompt(elevator_role_details.strip())
+                        elevator_md = call_hf_inference(elevator_prompt, hf_token)
+                        elevator_md = cleanup_narrative_format(elevator_md)
+                        elevator_md = strip_leading_preface(elevator_md)
+                        elevator_md = soften_robotic_tone(elevator_md)
+                        elevator_md = simplify_jargon(elevator_md)
+                        elevator_md = enforce_elevator_word_rules(elevator_md)
+                        elevator_md = cap_narrative_to_medium_two_minutes(elevator_md, max_words=85)
+                        st.session_state["elevator_pitch_md"] = elevator_md
+                    except Exception as exc:
+                        st.error(f"Hugging Face API error: {exc}")
+
+        if "elevator_pitch_md" in st.session_state:
+            st.markdown("---")
+            st.markdown(st.session_state["elevator_pitch_md"])
