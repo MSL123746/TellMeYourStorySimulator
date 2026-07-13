@@ -1,24 +1,6 @@
 import os
-import subprocess
-import sys
 import importlib
 from huggingface_hub import HfApi, InferenceClient  # type: ignore
-
-# If launched via `python file.py`, immediately hand off to Streamlit
-# before any Streamlit API calls run in bare mode.
-if __name__ == "__main__" and os.environ.get("STREAMLIT_LAUNCHED") != "1":
-    env = os.environ.copy()
-    env["STREAMLIT_LAUNCHED"] = "1"
-    try:
-        subprocess.run(
-            [sys.executable, "-m", "streamlit", "run", os.path.abspath(__file__), "--server.headless", "false"],
-            check=True,
-            env=env,
-        )
-    except KeyboardInterrupt:
-        # Allow clean shutdown when user stops the process with Ctrl+C.
-        sys.exit(0)
-    sys.exit(0)
 
 import streamlit as st
 
