@@ -144,9 +144,9 @@ Instructions:
 3. Keep it in first person, polished, confident, and natural for live delivery.
 4. Use a professional-conversational tone: warm, clear, and human, but not overly casual.
 5. Vary sentence length and avoid repetitive sentence openings.
-6. Use plain spoken language and light contractions where natural (for example: "I've", "I've led", "I'm focused").
+6. Use plain spoken language and light contractions where natural (for example: "I've", "I've led", "I'm excited").
 7. Avoid robotic or overly formal phrases like "I am writing to express", "therefore", "moreover", "in conclusion", "it is imperative", "leverage synergies", and "utilize".
-8. Sound like a real person speaking naturally in conversation, not reading a formal essay.
+8. Sound like a real candidate speaking naturally in an interview, not reading a formal essay.
 9. Use my resume experience as the foundation and tightly align it to this specific job description.
 10. Intertwine my experience with the role requirements so the response sounds tailored, strategic, and role-specific.
 11. Highlight concrete impact, measurable outcomes, and transferable strengths that map directly to the job.
@@ -163,9 +163,9 @@ Instructions:
 22. Keep the voice natural and spoken, as if I am talking in a general professional conversation.
 23. Start naturally with a spoken opener in this style: "Well, I've been ..." and then explain how my experience built over time.
 24. Emphasize progression over time, with examples of what I learned and how that led me to apply for this role.
-25. Do not include title-like starters such as "Tell me about yourself:", "Background:", "Who I am:", or similar label text.
-26. Do not use words like "excited", "thrilled", "glad", or "motivated".
-27. Output only markdown text (no JSON, no HTML).
+23. Do not include title-like starters such as "Tell me about yourself:", "Background:", "Who I am:", or similar label text.
+25. Do not use words like "excited", "thrilled", "glad", or "motivated".
+26. Output only markdown text (no JSON, no HTML).
 """.strip()
 
 
@@ -537,12 +537,23 @@ with tab_elevator:
     elevator_left_col, elevator_right_col = st.columns([1.15, 1], gap="large")
 
     with elevator_left_col:
-        st.markdown("### Enter Your Job Role with some Detail")
+        st.markdown(
+            "### Enter your Work Details as an example: "
+            "1. My Role with the Company is? "
+            "2. How does my work help the Team or add value to the Company. "
+            "3. What Problem do I help solve? "
+            "4. What Outcome do I help create?"
+        )
         elevator_role_details = st.text_area(
-            "Enter Your Job Role with some Detail",
+            "Enter your Work Details as an example: 1. My Role with the Company is? 2. How does my work help the Team or add value to the Company. 3. What Problem do I help solve? 4. What Outcome do I help create?",
             key="elevator_role_details",
             height=220,
-            placeholder="Describe the role and what the company needs...",
+            placeholder=(
+                "1) My Role with the Company is...\n"
+                "2) My work helps the team/company by...\n"
+                "3) A problem I help solve is...\n"
+                "4) An outcome I help create is..."
+            ),
             label_visibility="collapsed",
         )
 
