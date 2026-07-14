@@ -537,13 +537,6 @@ with tab_elevator:
     elevator_left_col, elevator_right_col = st.columns([1.15, 1], gap="large")
 
     with elevator_left_col:
-        st.markdown(
-            "### Enter your Work Details as an example: "
-            "1. My Role with the Company is? "
-            "2. How does my work help the Team or add value to the Company. "
-            "3. What Problem do I help solve? "
-            "4. What Outcome do I help create?"
-        )
         elevator_role_details = st.text_area(
             "Enter your Work Details as an example: 1. My Role with the Company is? 2. How does my work help the Team or add value to the Company. 3. What Problem do I help solve? 4. What Outcome do I help create?",
             key="elevator_role_details",
